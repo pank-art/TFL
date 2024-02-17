@@ -7,13 +7,16 @@
 #include <unordered_map>
 #include <algorithm>
 #include <regex>
+#include <set>
 
 class FiniteAutomaton {
 public:
     std::vector<std::string> states;
     std::string start_state;
     std::vector<std::string> final_states;
-    std::unordered_map<std::string, std::unordered_map<std::string, std::string>> transitions;
+    //std::unordered_map<std::string, std::unordered_map<std::string, std::string>> transitions;
+    std::unordered_map<std::string, std::unordered_map<std::string, std::unordered_set<std::string>>> transitions;
+
 
     FiniteAutomaton() = default;
 
@@ -24,25 +27,34 @@ public:
         new_automaton.final_states = final_states;
 
         for (const auto& from_state : transitions) {
-            for (const auto& entry : from_state.second) {
-                new_automaton.add_transition(from_state.first, entry.first, entry.second);
+            for (const auto& symbol_transitions : from_state.second) {
+                std::string symbol = symbol_transitions.first;
+                const auto& to_states = symbol_transitions.second;
+                for (const auto& to_state : to_states) {
+                    new_automaton.add_transition(from_state.first, symbol, to_state);
+                }
             }
         }
-
         return new_automaton;
     }
 
     std::string end_regex() const {
-        for (const auto& entry : transitions.at("new_start")) {
-            if (entry.second == "new_final") {
-                return entry.first;
-            }
+        for (const auto& from_state : transitions) {
+            for (const auto& symbol_transitions : from_state.second) {
+                std::string symbol = symbol_transitions.first;
+                const auto& to_states = symbol_transitions.second;
+                for (const auto& to_state : to_states) {
+                    if (to_state == "new_final") {
+                        return symbol;
+                    }
+                }
+            }           
         }
         return "";
     }
 
     void add_transition(const std::string& from_state, const std::string& symbol, const std::string& to_state) {
-        transitions[from_state][symbol] = to_state;
+        transitions[from_state][symbol].insert(to_state);
     }
 
     void read_automaton(std::ifstream& file) {
@@ -90,8 +102,12 @@ public:
         }
         std::cout << "\nTransitions:\n";
         for (const auto& from_state : transitions) {
-            for (const auto& entry : from_state.second) {
-                std::cout << "(" << from_state.first << ", " << entry.first << ") -> " << entry.second << "\n";
+            for (const auto& symbol_transitions : from_state.second) {
+                std::string symbol = symbol_transitions.first;
+                const auto& to_states = symbol_transitions.second;
+                for (const auto& to_state : to_states) {
+                    std::cout << "(" << from_state.first << ", " << symbol << ") -> " << to_state << "\n";
+                }
             }
         }
     }
@@ -116,9 +132,13 @@ public:
 
     std::string find_symbol_for_transition(const std::string& from_state, const std::string& to_state) const {
         for (const auto& from_state_entry : transitions) {
-            for (const auto& entry : from_state_entry.second) {
-                if (from_state_entry.first == from_state && entry.second == to_state) {
-                    return entry.first;
+            for (const auto& symbol_transitions : from_state_entry.second) {
+                std::string symbol = symbol_transitions.first;
+                const auto& to_states = symbol_transitions.second;
+                for (const auto& next_state : to_states) {
+                    if (from_state_entry.first == from_state && next_state == to_state) {
+                        return symbol;
+                    }
                 }
             }
         }
@@ -129,49 +149,90 @@ public:
         auto transitions_copy = transitions;
 
         std::string kk = "";
-        for (const auto& entry : transitions_copy[state_k]) {
-            if (entry.second == state_k && kk.empty()) {
-                kk = entry.first;
-                transitions[state_k].erase(entry.first);
-            }
-            else if (entry.second == state_k && !kk.empty()) {
-                kk += "|" + entry.first;
-                transitions[state_k].erase(entry.first);
+        for (const auto& symbol_transitions : transitions_copy[state_k]) {
+            std::string symbol = symbol_transitions.first;
+            const auto& to_states = symbol_transitions.second;
+            for (const auto& to_state : to_states) {
+                if (to_state == state_k && kk.empty()) {
+                    kk = symbol;
+                    transitions[state_k][symbol].erase(to_state);
+                    if (transitions[state_k][symbol].empty()) {
+                        transitions[state_k].erase(symbol);
+                    }
+                }
+                else if (to_state == state_k && !kk.empty()) {
+                    kk += "|" + symbol;
+                    transitions[state_k][symbol].erase(to_state);
+                    if (transitions[state_k][symbol].empty()) {
+                        transitions[state_k].erase(symbol);
+                    }
+                }
             }
         }
 
-        for (auto& from_state_entry : transitions_copy) {
-            for (const auto& entry : from_state_entry.second) {
-                if (entry.second == state_k && from_state_entry.first != state_k) {
-                    transitions[from_state_entry.first].erase(entry.first);
-                    std::string pk = entry.first;
+        for (auto& from_state : transitions_copy) {
+            for (const auto& symbol_transitions : from_state.second) {
+                std::string symbol = symbol_transitions.first;
+                const auto& to_states = symbol_transitions.second;
+                for (const auto& to_state : to_states) {
+                    if (to_state == state_k && from_state.first != state_k) {
+                        transitions[from_state.first][symbol].erase(to_state);
+                        if (transitions[from_state.first][symbol].empty()) {
+                            transitions[from_state.first].erase(symbol);
+                        }
+                        std::string pk = symbol;
 
-                    for (const auto& symbol_next_entry : transitions_copy[state_k]) {
-                        if (symbol_next_entry.second != state_k) {
-                            std::string kq = symbol_next_entry.first;
-                            std::string pq = find_symbol_for_transition(from_state_entry.first, symbol_next_entry.second);
-                           
-                            if (!pq.empty()) {
-                                for (const auto& sym_entry : transitions[from_state_entry.first]) {
-                                    if (sym_entry.second == symbol_next_entry.second) {
-                                        transitions[from_state_entry.first].erase(sym_entry.first);
-                                        break;
+                        for (const auto& symbol_next_transitions : transitions_copy[state_k]) {
+                            std::string symbol_next = symbol_next_transitions.first;
+                            const auto& next_states = symbol_next_transitions.second;
+                            for (const auto& next_state : next_states) {
+                                if (next_state != state_k) {
+                                    std::string kq = symbol_next;
+                                    std::string pq = find_symbol_for_transition(from_state.first, next_state);
+
+                                    if (!pq.empty()) {
+                                        bool found = false;
+                                        for (const auto& sym_transitions : transitions[from_state.first]) {
+                                            std::string sym = sym_transitions.first;
+                                            const auto& next_ss = sym_transitions.second;
+                                            for (const auto& next_s : next_ss) {
+                                                if (next_s == next_state) {
+                                                    transitions[from_state.first][sym].erase(next_s);
+                                                    if (transitions[from_state.first][sym].empty()) {
+                                                        transitions[from_state.first].erase(sym);
+                                                    }
+                                                    found = true;
+                                                    break;
+                                                }
+                                            }
+                                            if (found) {
+                                                break;
+                                            }
+                                        }
                                     }
+
+                                    if (transitions.count(state_k) && transitions[state_k].count(symbol_next)) {
+                                        for (const auto& next_s : transitions[state_k][symbol_next]) {
+                                            if (next_s == next_state) {
+                                                transitions[state_k][symbol_next].erase(next_s);
+                                                if (transitions[state_k][symbol_next].empty()) {
+                                                    transitions[state_k].erase(symbol_next);
+                                                }
+                                                break;
+                                            }
+                                        }
+                                    }
+
+                                    std::string simp;
+                                    if (!pq.empty()) {
+                                        simp = simplify_regex("(" + pq + ")|((" + pk + ")(" + kk + ")*(" + kq + "))");
+                                    }
+                                    else {
+                                        simp = simplify_regex("(" + pk + ")(" + kk + ")*(" + kq + ")");
+                                    }
+                                    add_transition(from_state.first, simp, next_state);
                                 }
                             }
-
-                            if (transitions.count(state_k) && transitions[state_k].count(symbol_next_entry.first)) {
-                                transitions[state_k].erase(symbol_next_entry.first);
-                            }
-
-                            std::string simp;
-                            if (!pq.empty()) {
-                                simp = simplify_regex("(" + pq + ")|((" + pk + ")(" + kk + ")*(" + kq + "))");
-                            }
-                            else {
-                                simp = simplify_regex("(" + pk + ")(" + kk + ")*(" + kq + ")");
-                            }
-                            add_transition(from_state_entry.first, simp, symbol_next_entry.second);
                         }
                     }
                 }
@@ -258,9 +319,39 @@ int main() {
         }
     } while (std::next_permutation(states.begin(), states.end()));
 
-    //std::replace(ans.begin(), ans.end(), 'E', 'E');
-    //std::ofstream output_file("out.txt");
-    output_file << ans;
+    output_file << "Регулярка минимальной длины, полученная при переборе всевозможных вариантов исключения состояний:\n";
+    output_file << ans << "\n";
+
+    std::map<std::string, int> delet;
+
+    for (auto state_it = states.rbegin(); state_it != states.rend(); ++state_it) {
+        const std::string& state = *state_it;
+        std::set<std::string> to_states;
+
+        for (const auto& sym_transitions : automaton.transitions[state]) {
+            const auto& next_states = sym_transitions.second;
+            for (const auto& next_state : next_states) {
+                if (next_state != "new_final") {
+                    to_states.insert(next_state);
+                }
+            }
+        }
+
+        delet[state] = to_states.size();
+    }
+
+    std::vector<std::pair<std::string, size_t>> delet_vector(delet.begin(), delet.end());
+    std::sort(delet_vector.begin(), delet_vector.end(), [](const auto& a, const auto& b) {
+        return a.second <= b.second;
+        });
+
+    for (const auto& pair : delet_vector) {
+        automaton.delete_state(pair.first);
+    }
+
+    //std::cout << automaton.end_regex() << std::endl;
+    output_file << "Регулярка, полученная при оптимальном порядке исключения состояний:\n";
+    output_file << automaton.end_regex() << "\n";
 
     return 0;
 }
