@@ -50,6 +50,10 @@ std::string define(int n) {
                 s += "(assert (>= N" + std::to_string(i) + std::to_string(j) + " 0))\n";
             }
         }
+        s += "(declare-fun Nstart" + std::to_string(i) + " () Int)\n";
+        s += "(assert (or (= Nstart" + std::to_string(i) + " 0) (= Nstart" + std::to_string(i) + " 1)))\n";
+        s += "(declare-fun N" + std::to_string(i) + "last" + " () Int)\n";
+        s += "(assert (or (= N" + std::to_string(i) + "last" + " 0) (= N" + std::to_string(i) + "last" + " 1)))\n";
     }
     return s;
 }
@@ -88,10 +92,28 @@ std::string sumNnj(const std::vector<Domino>& dominoes, size_t j) {
     return s;
 }
 
+std::pair<int, int> count_pair(const std::string& pair, const std::string& up, const std::string& down) {
+    int upCount = 0;
+    int downCount = 0;
+
+    for (size_t k = 0; k < up.size() - 1; ++k) {
+        if (up.substr(k, 2) == pair) {
+            ++upCount;
+        }
+    }
+
+    for (size_t k = 0; k < down.size() - 1; ++k) {
+        if (down.substr(k, 2) == pair) {
+            ++downCount;
+        }
+    }
+
+    return { upCount, downCount };
+}
+
 int n = 0;
 
 std::vector<std::string> generateConditions(const std::vector<Domino>& dominoes, const std::set<char>& alphabet) {
-    n = dominoes.size();
     std::vector<std::string> conditions;
 
     for (char letter : alphabet) {
@@ -122,79 +144,114 @@ std::vector<std::string> generateConditions(const std::vector<Domino>& dominoes,
         conditions.push_back("(= " + sUp + " " + sDown + ")");
     }
 
-    for (size_t i = 0; i < dominoes.size(); ++i) {
-        for (size_t j = 0; j < dominoes.size(); ++j) {
+    std::string one_start = "(= (+";
+    std::string one_last = "(= (+";
+
+    for (std::size_t i = 0; i < dominoes.size(); ++i) {
+        //сумма смычек для каждой домино с каждой стороны равна кол-во вхождений
+        std::string start = "(= (+ Nstart" + std::to_string(i);
+        std::string end = "(= (+ N" + std::to_string(i) + "last";
+
+        for (std::size_t j = 0; j < dominoes.size(); ++j) {
             if (i != j) {
-                conditions.push_back("(<= N" + std::to_string(i) + std::to_string(j) + " M_" + std::to_string(i) + ")");
-                conditions.push_back("(<= N" + std::to_string(i) + std::to_string(j) + " M_" + std::to_string(j) + ")");
+                start += " N" + std::to_string(j) + std::to_string(i);
+                end += " N" + std::to_string(i) + std::to_string(j);
+            }
+        }
+
+        start += ") M_" + std::to_string(i) + ")";
+        end += ") M_" + std::to_string(i) + ")";
+
+        conditions.push_back(start);
+        conditions.push_back(end);
+
+        //кол-во начальных и конечных домино = 1
+        one_start += " Nstart" + std::to_string(i);
+        one_last += " N" + std::to_string(i) + "last";
+    }
+
+    one_start += ") 1)";
+    one_last += ") 1)";
+    conditions.push_back(one_start);
+    conditions.push_back(one_last);
+
+    //тут добавил всевозможные пары букв
+    std::vector<std::string> pairs;
+    for (std::size_t i = 0; i < dominoes.size(); ++i) {
+        for (std::size_t j = 0; j < dominoes.size(); ++j) {
+            if (i != j) {
+                std::string up = dominoes[i].up + dominoes[j].up[0];
+                std::string down = dominoes[i].down + dominoes[j].down[0];
+
+                for (std::size_t k = 0; k < up.size() - 1; ++k) {
+                    int c = 1;
+                    for (std::size_t l = 0; l < pairs.size(); ++l) {
+                        if (up.substr(k, 2) == pairs[l]) {
+                            c = 0;
+                            break;
+                        }
+                    }
+                    if (c) {
+                        pairs.push_back(up.substr(k, 2));
+                    }
+                }
+ 
+
+                for (std::size_t k = 0; k < down.size() - 1; ++k) {
+                    int c = 1;
+                    for (std::size_t l = 0; l < pairs.size(); ++l) {
+                        if (down.substr(k, 2) == pairs[l]) {
+                            c = 0;
+                            break;
+                        }
+                    }
+                    if (c) {
+                        pairs.push_back(down.substr(k, 2));
+                    }
+                }
             }
         }
     }
 
-    std::string s = "(or";
-    for (size_t i = 0; i < dominoes.size(); ++i) {        
-        for (size_t j = 0; j < dominoes.size(); ++j) {
-            if (i != j && dominoes[i].up[0] == dominoes[i].down[0] && dominoes[j].up.back() == dominoes[j].down.back()) {
-                std::string start = " (and (= " + sumNnj(dominoes, i) + " " +
-                    "(- M_" + std::to_string(i) + " 1))";
-                std::string end = " (and (= " + sumNin(dominoes, j) + " " +
-                    "(- M_" + std::to_string(j) + " 1))";
-                for (size_t k = 0; k < dominoes.size(); ++k) {
-                    if (i != k) {
-                        start += " (= " + sumNnj(dominoes, k) + " M_" + std::to_string(k) + ")";
-                    }
-                    if (j != k) {
-                        end += " (= " + sumNin(dominoes, k) + " M_" + std::to_string(k) + ")";
-                    }
-                }
-                start += ")";
-                end += ")";
+    //тут условия на равенство кол-во пар сверху и снизу
+    for (const auto& pair : pairs) {
+        std::string up_cond = "(+ 0";
+        std::string down_cond = "(+ 0";
 
-                std::string second = " ";
-                if (dominoes[i].up.size() > dominoes[i].down.size()) {
-                    char symbol = dominoes[i].up[dominoes[i].down.size()];
-                    for (size_t k = 0; k < dominoes.size(); ++k) {
-                        if (k != i) {
-                            if (dominoes[k].down[0] != symbol) {
-                                second += "(= N" + std::to_string(i) + std::to_string(k) + " 0) ";
-                            }
+        for (std::size_t i = 0; i < dominoes.size(); ++i) {
+            for (std::size_t j = 0; j < dominoes.size(); ++j) {
+                if (i != j) {
+                    auto [up_count, down_count] = count_pair(pair, dominoes[i].up + dominoes[j].up[0],
+                        dominoes[i].down + dominoes[j].down[0]);
+
+                    if (up_count != down_count) {
+                        if (up_count != 0) {
+                            up_cond += " (* " + std::to_string(up_count) + " N" + std::to_string(i) + std::to_string(j) + ")";
+                        }
+
+                        if (down_count != 0) {
+                            down_cond += " (* " + std::to_string(down_count) + " N" + std::to_string(i) + std::to_string(j) + ")";
                         }
                     }
                 }
-                else if (dominoes[i].up.size() < dominoes[i].down.size()) {
-                    char symbol = dominoes[i].down[dominoes[i].up.size()];
-                    for (size_t k = 0; k < dominoes.size(); ++k) {
-                        if (k != i) {
-                            if (dominoes[k].up[0] != symbol) {
-                                second += "(= N" + std::to_string(i) + std::to_string(k) + " 0) ";
-                            }
-                        }
-                    }
+            }
+
+            auto [up_count, down_count] = count_pair(pair, dominoes[i].up, dominoes[i].down);
+
+            if (up_count != down_count) {
+                if (up_count != 0) {
+                    up_cond += " (* " + std::to_string(up_count) + " N" + std::to_string(i) + "last)";
                 }
-                else {
-                    if (dominoes[i].up == dominoes[i].down) {
-                        for (size_t k = 0; k < dominoes.size(); ++k) {
-                            if (k != i) {
-                                if (dominoes[k].up[0] != dominoes[i].up[0] and dominoes[k].down[0] != dominoes[i].up[0]) {
-                                    std::string cond = "(= N" + std::to_string(i) + std::to_string(k) + " 0)";
-                                    conditions.push_back(cond);
-                                }
-                            }
-                        }
-                    }
+
+                if (down_count != 0) {
+                    down_cond += " (* " + std::to_string(down_count) + " N" + std::to_string(i) + "last)";
                 }
-                second.pop_back();
-                s += " (and" + start + end + second + ")";
             }
         }
-    }
 
-    s += ")";
-    if (s == "(or)") {
-        s = "false";
+        std::string cond = "(= " + up_cond + ") " + down_cond + "))";
+        conditions.push_back(cond);
     }
-
-    conditions.push_back(s);
 
     return conditions;
 }
@@ -220,7 +277,7 @@ int main() {
 
     std::ofstream file("smt.smt2");
     file << "(set-logic QF_NIA)\n";
-    file << define(dominoes.size()) << '\n';
+    file << define(int(dominoes.size())) << '\n';
     for (const auto& condition : conditions) {
         file << "(assert " << condition << ")\n";
     }
