@@ -290,6 +290,11 @@ int main() {
     FiniteAutomaton automaton;
     std::ifstream input_file("input.txt");
     automaton.read_automaton(input_file);
+    std::string last_delete_state = "";
+    if (automaton.final_states.size() == 1 && automaton.start_state == automaton.final_states[0]) {
+        last_delete_state = automaton.start_state;
+    }
+    //cout << last_delete_state << endl;
     automaton.make_uniform();
 
     std::vector<std::string> states;
@@ -299,7 +304,7 @@ int main() {
         }
     }
     std::ofstream output_file("out.txt");
-    
+    std::sort(states.begin(), states.end());
     std::string ans = "";
     do {
         FiniteAutomaton a_copy = automaton.copy();
@@ -318,7 +323,7 @@ int main() {
             ans = a_copy.end_regex();
         }
     } while (std::next_permutation(states.begin(), states.end()));
-
+    
     output_file << "Регулярка минимальной длины, полученная при переборе всевозможных вариантов исключения состояний:\n";
     output_file << ans << "\n";
 
@@ -338,6 +343,14 @@ int main() {
         }
 
         delet[state] = to_states.size();
+    }
+
+    if (last_delete_state != "") {
+        int summ = 0;
+        for (const auto& state : states) {
+            summ += delet[state];
+        }
+        delet[last_delete_state] += summ;
     }
 
     std::vector<std::pair<std::string, size_t>> delet_vector(delet.begin(), delet.end());
