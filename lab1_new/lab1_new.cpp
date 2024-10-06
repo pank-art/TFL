@@ -157,7 +157,7 @@ std::vector<std::string> generateConditions(const std::vector<Domino>& dominoes,
         conditions.push_back(start);
         conditions.push_back(end);
 
-        conditions.push_back("(<= N" + std::to_string(i) + std::to_string(i) + " (- M_" + std::to_string(i) + " 1))");
+        conditions.push_back("(or (<= N" + std::to_string(i) + std::to_string(i) + " (- M_" + std::to_string(i) + " 1)) (and (= 0 N" + std::to_string(i) + std::to_string(i) + ") (= 0 M_" + std::to_string(i) + ")))");
 
         //кол-во начальных и конечных домино = 1
         one_start += " Nstart" + std::to_string(i);
@@ -169,7 +169,7 @@ std::vector<std::string> generateConditions(const std::vector<Domino>& dominoes,
     conditions.push_back(one_start);
     conditions.push_back(one_last);
 
-    //тут добавил всевозможные пары букв
+    //тут добавил всевозможные пары букв (создание pairs)
     std::vector<std::string> pairs;
     for (std::size_t i = 0; i < dominoes.size(); ++i) {
         for (std::size_t j = 0; j < dominoes.size(); ++j) {
@@ -212,6 +212,7 @@ std::vector<std::string> generateConditions(const std::vector<Domino>& dominoes,
 
         for (std::size_t i = 0; i < dominoes.size(); ++i) {
             for (std::size_t j = 0; j < dominoes.size(); ++j) {
+                // количество pair сверху и снизу в домино[i] + первая буква домино[j]
                 auto [up_count, down_count] = count_pair(pair, dominoes[i].up + dominoes[j].up[0],
                     dominoes[i].down + dominoes[j].down[0]);
 
@@ -225,7 +226,7 @@ std::vector<std::string> generateConditions(const std::vector<Domino>& dominoes,
                     }
                 }
             }
-
+            // количество pair сверху и снизу в домино[i]. 
             auto [up_count, down_count] = count_pair(pair, dominoes[i].up, dominoes[i].down);
 
             if (up_count != down_count) {
