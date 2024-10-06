@@ -1,2 +1,5 @@
 
 lab2_new/lab2_new.exe
+**/build/
+**/out/
+**/.vs/
