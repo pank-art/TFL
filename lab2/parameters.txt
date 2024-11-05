@@ -1,0 +1,2 @@
+maximumlength = 4
+maximum_nesting_of_parentheses = 1
