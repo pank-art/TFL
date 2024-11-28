@@ -8,5 +8,5 @@ pip install -r requirements.txt
 ```
 
 #### Реализовано 2 типа запуска:
-1) _cfg_to_pda.py_ преобразует грамматику из _data/grammar.txt_ в PDA и сохраняет его в _data/pda.json_.
-2) _parser_mode.py_ проверяет, распознается ли введенная строка PDA, прочитаным из файла.
+1) `cfg_to_pda.py` преобразует грамматику из `data/grammar.txt` в PDA и сохраняет его в `data/pda.json`.
+2) `parser_mode.py` проверяет, распознается ли введенная строка PDA, прочитаным из файла.
