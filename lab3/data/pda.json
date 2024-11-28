@@ -1,0 +1,329 @@
+{
+    "states": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        "pop_S->aA_0",
+        "pop_A->cc_1",
+        "pop_S->aA_1",
+        "pop_S->aSb_0",
+        "pop_S->c_0",
+        "pop_S->aSb_2",
+        "pop_A->aA_1",
+        "pop_S->aSb_1",
+        "pop_A->aA_0",
+        "pop_A->cc_0"
+    ],
+    "start_state": 0,
+    "accept_state": 3,
+    "transitions": {
+        "0": {
+            "c,x": [
+                {
+                    "to_state": 1,
+                    "stack_action": [
+                        "S1",
+                        "x"
+                    ]
+                }
+            ],
+            "a,x": [
+                {
+                    "to_state": 2,
+                    "stack_action": [
+                        "S2",
+                        "x"
+                    ]
+                }
+            ]
+        },
+        "2": {
+            "c,x": [
+                {
+                    "to_state": 4,
+                    "stack_action": [
+                        "S4",
+                        "x"
+                    ]
+                }
+            ],
+            "a,x": [
+                {
+                    "to_state": 5,
+                    "stack_action": [
+                        "S5",
+                        "x"
+                    ]
+                }
+            ]
+        },
+        "4": {
+            "c,x": [
+                {
+                    "to_state": 8,
+                    "stack_action": [
+                        "S8",
+                        "x"
+                    ]
+                }
+            ],
+            "\u03b5,x": [
+                {
+                    "to_state": "pop_S->c_0",
+                    "stack_action": "\u03b5"
+                }
+            ]
+        },
+        "5": {
+            "c,x": [
+                {
+                    "to_state": 4,
+                    "stack_action": [
+                        "S4",
+                        "x"
+                    ]
+                }
+            ],
+            "a,x": [
+                {
+                    "to_state": 5,
+                    "stack_action": [
+                        "S5",
+                        "x"
+                    ]
+                }
+            ]
+        },
+        "7": {
+            "b,x": [
+                {
+                    "to_state": 10,
+                    "stack_action": [
+                        "S10",
+                        "x"
+                    ]
+                }
+            ]
+        },
+        "1": {
+            "\u03b5,x": [
+                {
+                    "to_state": "pop_S->c_0",
+                    "stack_action": "\u03b5"
+                }
+            ]
+        },
+        "pop_S->c_0": {
+            "\u03b5,S0": [
+                {
+                    "to_state": 3,
+                    "stack_action": [
+                        "S3",
+                        "S0"
+                    ]
+                }
+            ],
+            "\u03b5,S2": [
+                {
+                    "to_state": 7,
+                    "stack_action": [
+                        "S7",
+                        "S2"
+                    ]
+                }
+            ],
+            "\u03b5,S5": [
+                {
+                    "to_state": 7,
+                    "stack_action": [
+                        "S7",
+                        "S5"
+                    ]
+                }
+            ]
+        },
+        "6": {
+            "\u03b5,x": [
+                {
+                    "to_state": "pop_S->aA_0",
+                    "stack_action": "\u03b5"
+                }
+            ]
+        },
+        "pop_S->aA_0": {
+            "\u03b5,x": [
+                {
+                    "to_state": "pop_S->aA_1",
+                    "stack_action": "\u03b5"
+                }
+            ]
+        },
+        "pop_S->aA_1": {
+            "\u03b5,S0": [
+                {
+                    "to_state": 3,
+                    "stack_action": [
+                        "S3",
+                        "S0"
+                    ]
+                }
+            ],
+            "\u03b5,S2": [
+                {
+                    "to_state": 7,
+                    "stack_action": [
+                        "S7",
+                        "S2"
+                    ]
+                }
+            ],
+            "\u03b5,S5": [
+                {
+                    "to_state": 7,
+                    "stack_action": [
+                        "S7",
+                        "S5"
+                    ]
+                }
+            ]
+        },
+        "8": {
+            "\u03b5,x": [
+                {
+                    "to_state": "pop_A->cc_0",
+                    "stack_action": "\u03b5"
+                }
+            ]
+        },
+        "pop_A->cc_0": {
+            "\u03b5,x": [
+                {
+                    "to_state": "pop_A->cc_1",
+                    "stack_action": "\u03b5"
+                }
+            ]
+        },
+        "pop_A->cc_1": {
+            "\u03b5,S2": [
+                {
+                    "to_state": 6,
+                    "stack_action": [
+                        "S6",
+                        "S2"
+                    ]
+                }
+            ],
+            "\u03b5,S5": [
+                {
+                    "to_state": 9,
+                    "stack_action": [
+                        "S9",
+                        "S5"
+                    ]
+                }
+            ]
+        },
+        "9": {
+            "\u03b5,x": [
+                {
+                    "to_state": "pop_A->aA_0",
+                    "stack_action": "\u03b5"
+                },
+                {
+                    "to_state": "pop_S->aA_0",
+                    "stack_action": "\u03b5"
+                }
+            ]
+        },
+        "pop_A->aA_0": {
+            "\u03b5,x": [
+                {
+                    "to_state": "pop_A->aA_1",
+                    "stack_action": "\u03b5"
+                }
+            ]
+        },
+        "pop_A->aA_1": {
+            "\u03b5,S2": [
+                {
+                    "to_state": 6,
+                    "stack_action": [
+                        "S6",
+                        "S2"
+                    ]
+                }
+            ],
+            "\u03b5,S5": [
+                {
+                    "to_state": 9,
+                    "stack_action": [
+                        "S9",
+                        "S5"
+                    ]
+                }
+            ]
+        },
+        "10": {
+            "\u03b5,x": [
+                {
+                    "to_state": "pop_S->aSb_0",
+                    "stack_action": "\u03b5"
+                }
+            ]
+        },
+        "pop_S->aSb_0": {
+            "\u03b5,x": [
+                {
+                    "to_state": "pop_S->aSb_1",
+                    "stack_action": "\u03b5"
+                }
+            ]
+        },
+        "pop_S->aSb_1": {
+            "\u03b5,x": [
+                {
+                    "to_state": "pop_S->aSb_2",
+                    "stack_action": "\u03b5"
+                }
+            ]
+        },
+        "pop_S->aSb_2": {
+            "\u03b5,S0": [
+                {
+                    "to_state": 3,
+                    "stack_action": [
+                        "S3",
+                        "S0"
+                    ]
+                }
+            ],
+            "\u03b5,S2": [
+                {
+                    "to_state": 7,
+                    "stack_action": [
+                        "S7",
+                        "S2"
+                    ]
+                }
+            ],
+            "\u03b5,S5": [
+                {
+                    "to_state": 7,
+                    "stack_action": [
+                        "S7",
+                        "S5"
+                    ]
+                }
+            ]
+        }
+    },
+    "deterministic": false
+}

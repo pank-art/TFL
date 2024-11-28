@@ -5,3 +5,7 @@ lab2_new/lab2_new.exe
 **/.vs/
 **/.venv/
 **/.idea/
+**/___pycache__/
+lab2/__pycache__/L_block.cpython-312.pyc
+lab2/__pycache__/mat.cpython-312.pyc
+

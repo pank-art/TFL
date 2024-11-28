@@ -1,0 +1,72 @@
+digraph {
+	graph [rankdir=LR]
+	0 [label="State 0
+S -> .c
+S -> .aA
+S -> .aSb
+S' -> .S" shape=ellipse]
+	1 [label="State 1
+S -> c." shape=ellipse]
+	2 [label="State 2
+A -> .aA
+S -> a.A
+S -> .c
+S -> .aSb
+S -> a.Sb
+A -> .cc
+S -> .aA" shape=ellipse]
+	3 [label="State 3
+S' -> S." shape=ellipse]
+	4 [label="State 4
+S -> c.
+A -> c.c" shape=ellipse]
+	5 [label="State 5
+A -> .aA
+S -> a.A
+S -> .c
+A -> a.A
+S -> .aSb
+S -> a.Sb
+A -> .cc
+S -> .aA" shape=ellipse]
+	6 [label="State 6
+S -> aA." shape=ellipse]
+	7 [label="State 7
+S -> aS.b" shape=ellipse]
+	8 [label="State 8
+A -> cc." shape=ellipse]
+	9 [label="State 9
+A -> aA.
+S -> aA." shape=ellipse]
+	10 [label="State 10
+S -> aSb." shape=ellipse]
+	0 -> 1 [label=c]
+	0 -> 2 [label=a]
+	0 -> 3 [label=S]
+	2 -> 4 [label=c]
+	2 -> 5 [label=a]
+	2 -> 6 [label=A]
+	2 -> 7 [label=S]
+	4 -> 8 [label=c]
+	5 -> 4 [label=c]
+	5 -> 5 [label=a]
+	5 -> 9 [label=A]
+	5 -> 7 [label=S]
+	7 -> 10 [label=b]
+	accept_1 [label="S->c: reduce" color=green shape=box]
+	1 -> accept_1 [label="S->c: reduce"]
+	accept_3 [label="$: accept" color=green shape=box]
+	3 -> accept_3 [label="$: accept"]
+	accept_4 [label="S->c: reduce" color=green shape=box]
+	4 -> accept_4 [label="S->c: reduce"]
+	accept_6 [label="S->aA: reduce" color=green shape=box]
+	6 -> accept_6 [label="S->aA: reduce"]
+	accept_8 [label="A->cc: reduce" color=green shape=box]
+	8 -> accept_8 [label="A->cc: reduce"]
+	accept_9 [label="A->aA: reduce" color=green shape=box]
+	9 -> accept_9 [label="A->aA: reduce"]
+	accept_9 [label="S->aA: reduce" color=green shape=box]
+	9 -> accept_9 [label="S->aA: reduce"]
+	accept_10 [label="S->aSb: reduce" color=green shape=box]
+	10 -> accept_10 [label="S->aSb: reduce"]
+}
