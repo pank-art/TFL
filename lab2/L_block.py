@@ -2,8 +2,8 @@ import re
 import copy
 from mat import auto_inclusion, auto_equivalence
 
-max_size = 4
-alphabet = "abc012"
+max_size = 0
+alphabet = ""
 file_path = 'auto.txt'
 
 # грамматика
@@ -52,6 +52,7 @@ class L:
         return copy.deepcopy(self)
 
     def expansion(self):
+        """Расширяется таблица и проверяются необходимые условия"""
         print("expansion")
         s_exp = []
         for i in range(len(self.s)):
@@ -80,21 +81,23 @@ class L:
                 print('Nice')
                 return True
             else:
-                return self.add_suff(equal)
+                return self._add_suff(equal)
         else:
             return self.expansion()
 
-    def add_suff(self, suff):
+    def _add_suff(self, suff):
+        """Добавляем суффиксы"""
         print("add_suff")
         all_suff = [suff[i:] for i in range(len(suff))]
         for s in all_suff:
             if s not in self.e:
                 self.e.append(s)
-        self.update_table()
+        self._update_table()
         self.len_s = 0
         return self.expansion()
 
-    def update_table(self):
+    def _update_table(self):
+        """Добавляем значения для новых суффиксов"""
         print("update_table")
         for i in range(len(self.s)):
             for j in range(len(self.e)):
@@ -102,6 +105,7 @@ class L:
                     self.table[i].append(inclusion(simplify_epsilon(self.s[i] + self.e[j])))
 
     def add_word_block(self, w: str, w_start, w_end):
+        """Добавление слова, принадлежащего какому-то из подавтоматов"""
         print("add_word_block")
         for x in w:
             self.alphabet.add(x)
@@ -111,6 +115,7 @@ class L:
         self.expansion_block(w_start, w_end)
 
     def only_add_suff(self, suff):
+        """Добавление суффиксов без обновления значений"""
         print("only_add_suff")
         all_suff = [suff[i:] for i in range(len(suff))]
         for s in all_suff:
@@ -118,6 +123,7 @@ class L:
                 self.e.append(s)
 
     def update_table_block(self, w_start, w_end):
+        """Добавление значений для новых суффиксов подавтоматов"""
         print("update_table_block")
         for i in range(len(self.s)):
             for j in range(len(self.e)):
@@ -125,6 +131,7 @@ class L:
                     self.table[i].append(inclusion(simplify_epsilon(w_start + self.s[i] + self.e[j] + w_end)))
 
     def expansion_block(self, w_start, w_end):
+        """Расширение таблицы для подавтомата (без проверки эквивалентности)"""
         print("expansion_block")
         s_exp = []
         for i in range(len(self.s)):
@@ -157,7 +164,7 @@ def eq(l: L):
         f = 1
     else:
         f = 0
-    tabl = []
+    tabl = []  # Перевод данных в формат, нужный mat
     for i in range(len(l.s)):
         for j in range(len(l.e)):
             if f:
@@ -298,23 +305,6 @@ def kleene_star(l: L):
     return new
 
 
-def eol_new(l: L, w: str):
-    w_eol = w[len(w) - max_size:]
-    w_new = w + w_eol
-    while inclusion(w_new):
-        w_eol = w_eol[1:]
-        w_new = w + w_eol
-
-    for x in w_eol:
-        l.alphabet.add(x)
-
-    l.only_add_suff(w_eol)
-    l.update_table_block(w, '')
-    l.expansion_block(w, '')
-
-    return l
-
-
 def read_parametrs(filename: str = "parameters.txt"):
     f = open(filename, 'r')
     l1 = f.readline()
@@ -331,6 +321,7 @@ def main():
     max_size, _ = read_parametrs()
     program = L()
 
+    # Создаю свою таблицу для каждого подавтомата
     const_lbr1 = L()
     rbr1 = L()
     pattern = L()
@@ -341,8 +332,8 @@ def main():
 
     empty = L()
     w = eq(empty)
-    equivalence = 0
-    while not equivalence:
+    while w != "True":
+        # Вначале определяем алфавит для eol
         w_eol = w[len(w) - max_size:]
         w_new = w + w_eol
         while inclusion(w_new):
@@ -362,6 +353,7 @@ def main():
             i -= 1
         eol_last = i + 1
 
+        # добавляем слово, распознающееся eol в места [eol]* для корректного разбиения на подавтоматы
         for i in range(eol_first + 1, eol_last):  # +1 для вставки в конец
             # Вставляем w_eol на позицию i
             modified_word = w[:i] + w_eol + w[i:]
@@ -370,7 +362,7 @@ def main():
                 print("Подходящее место для вставки найдено:", modified_word)
                 w = modified_word
                 break
-
+        # добавляем слово, распознающееся eol в места [eol]* для корректного разбиения на подавтоматы
         for i in range(eol_last - 1, eol_first, -1):  # +1 для вставки в конец
             # Вставляем w_eol на позицию i
             modified_word = w[:i] + w_eol + w[i:]
@@ -387,7 +379,7 @@ def main():
         # Печатаем результат
         print(lexemes)
 
-        if len(lexemes) >= 5:
+        if len(lexemes) >= 5:  # после добавления eol должно всегда получаться разбить слово на нужные мне подслова
             w_rbr1 = lexemes[len(lexemes) - 1]
             rbr1.add_word_block(w_rbr1, w[:eol_last - len(w_rbr1)], w[eol_last:])
             w_const_lbr1 = lexemes[0]
@@ -476,7 +468,7 @@ def main():
         l4 = conc(l3, kleene_star(l3))
         program = conc(eol_star, l4)
 
-        equivalence = eq(program)
+        w = eq(program)
 
     print(program)
 

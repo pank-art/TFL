@@ -5,7 +5,7 @@ if __name__ == "__main__":
     aba.alphabet.add('a')
     aba.alphabet.add('b')
     aba.alphabet.add('c')
-    aba.expansion()
+    aba.expansion()  # автомат в auto.txt (переменная filepath в L_block)
 
     aba_star = kleene_star(aba)
     print(aba_star)
