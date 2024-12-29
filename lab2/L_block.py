@@ -1,10 +1,10 @@
 import re
 import copy
 from mat import auto_inclusion, auto_equivalence
+from relict_mat import membershipQuery, equivalenceQuery
 
 max_size = 0
 alphabet = ""
-file_path = 'auto.txt'
 
 # грамматика
 """
@@ -22,9 +22,11 @@ class L:
     def __init__(self):
         self.s = ['E']
         self.e = ['E']
-        self.table = [[0]]
+        self.table = [[False]]
         self.alphabet = set()
         self.len_s = 0
+        self.s_exp = []
+        self.table_exp = []
 
     def __str__(self):
         tabl = ''
@@ -42,7 +44,18 @@ class L:
             else:
                 tabl += self.s[i] + '\t\t'
             for incl in self.table[i]:
-                tabl += str(incl) + '\t\t'
+                tabl += str(int(incl)) + '\t\t'
+            tabl += '\n'
+
+        tabl += '----------------------------------------\n'
+
+        for i in range(len(self.s_exp)):
+            if len(self.s_exp[i]) > 3:
+                tabl += self.s_exp[i] + '\t'
+            else:
+                tabl += self.s_exp[i] + '\t\t'
+            for incl in self.table_exp[i]:
+                tabl += str(int(incl)) + '\t\t'
             tabl += '\n'
 
         return tabl
@@ -53,30 +66,35 @@ class L:
 
     def expansion(self):
         """Расширяется таблица и проверяются необходимые условия"""
-        print("expansion")
-        s_exp = []
+        # print("expansion")
         for i in range(len(self.s)):
             for y in self.alphabet:
-                if i >= self.len_s and not (self.s[i] + y) in self.s:
-                    s_exp.append(simplify_epsilon(self.s[i] + y))
+                if i >= self.len_s and not simplify_epsilon(self.s[i] + y) in self.s and not simplify_epsilon(
+                        self.s[i] + y) in self.s_exp:
+                    self.s_exp.append(simplify_epsilon(self.s[i] + y))
+                    self.table_exp.append([])
+                    for j in range(len(self.e)):
+                        self.table_exp[-1].append(
+                            inclusion(simplify_epsilon(self.s_exp[-1] + self.e[j])))
 
-        table_exp = []
-        for i in range(len(s_exp)):
-            table_exp.append([])
-            for j in range(len(self.e)):
-                table_exp[i].append(inclusion(simplify_epsilon(s_exp[i] + self.e[j])))  # mat(s_exp[i] + self.e[j])
         self.len_s = len(self.s)
 
+        indexes = []
         full = 1
-        for i in range(len(table_exp)):
-            if not table_exp[i] in self.table:
-                self.table.append(table_exp[i])
-                self.s.append(s_exp[i])
+        for i in range(len(self.table_exp)):
+            if not self.table_exp[i] in self.table:
+                self.table.append(self.table_exp[i])
+                self.s.append(self.s_exp[i])
+                indexes.append(i)
                 full = 0
+
+        for i in indexes:
+            self.s_exp.pop(i)
+            self.table_exp.pop(i)
 
         if full:
             equal = eq(self)
-            if equal == 'True':
+            if equal == True:
                 print(self)
                 print('Nice')
                 return True
@@ -87,7 +105,7 @@ class L:
 
     def _add_suff(self, suff):
         """Добавляем суффиксы"""
-        print("add_suff")
+        # print("add_suff")
         all_suff = [suff[i:] for i in range(len(suff))]
         for s in all_suff:
             if s not in self.e:
@@ -98,12 +116,18 @@ class L:
 
     def _update_table(self):
         """Добавляем значения для новых суффиксов"""
-        print("update_table")
+        # print("update_table")
         for i in range(len(self.s)):
             for j in range(len(self.e)):
                 if j >= len(self.table[i]):
                     self.table[i].append(inclusion(simplify_epsilon(self.s[i] + self.e[j])))
 
+        for i in range(len(self.s_exp)):
+            for j in range(len(self.e)):
+                if j >= len(self.table_exp[i]):
+                    self.table_exp[i].append(inclusion(simplify_epsilon(self.s_exp[i] + self.e[j])))
+
+    # Далее блочная вариант (не проверенный) и без расширенной части таблицы
     def add_word_block(self, w: str, w_start, w_end):
         """Добавление слова, принадлежащего какому-то из подавтоматов"""
         print("add_word_block")
@@ -160,29 +184,56 @@ class L:
 
 
 def eq(l: L):
-    if len(l.s) > 1:
-        f = 1
-    else:
-        f = 0
-    tabl = []  # Перевод данных в формат, нужный mat
+    table_string = ""
     for i in range(len(l.s)):
         for j in range(len(l.e)):
-            if f:
-                tabl.append((l.s[i], l.e[j], l.table[i][j]))
+            if l.table[i][j]:
+                table_string += "1 "
             else:
-                tabl.append((l.s[i], l.e[j], l.table[i][j]))
+                table_string += "0 "
 
-    res = auto_equivalence(file_path, tabl)
-    if res == '':
-        print(l)
-        print("Результат auto_equivalence: ''")
-        return input("Введите результат eq ")
+    for i in range(len(l.s_exp)):
+        for j in range(len(l.e)):
+            if l.table_exp[i][j]:
+                table_string += "1 "
+            else:
+                table_string += "0 "
+
+    Sm = ""
+    for x in l.s:
+        if x == "E":
+            Sm += "ε "
+        else:
+            Sm += str(x) + " "
+    Em = ""
+    for x in l.e:
+        if x == "E":
+            Em += "ε "
+        else:
+            Em += str(x) + " "
+
+    Nm = ""
+    for x in l.s_exp:
+        if x == "E":
+            Nm += "ε "
+        else:
+            Nm += str(x) + " "
+
+    Sm = Sm[:len(Sm) - 1]
+    Em = Em[:len(Em) - 1]
+    Nm = Nm[:len(Nm) - 1]
+    table_string = table_string[:len(table_string) - 1]
+
+    equal = equivalenceQuery(Sm, Nm, Em, table_string)
+    if equal[0] == 2:
+        return True
     else:
-        return auto_equivalence(file_path, tabl)
+        return equal[1]
 
 
-def inclusion(s: str) -> int:
-    return int(auto_inclusion(file_path, s))
+def inclusion(s: str):
+    s = s.replace("E", "ε")
+    return membershipQuery(s)
 
 
 def simplify_epsilon(s: str) -> str:

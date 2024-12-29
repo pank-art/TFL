@@ -1,13 +1,9 @@
-from L_block import conc, kleene_star, L, inclusion
+from L_block import L
+
 
 if __name__ == "__main__":
     aba = L()
-    aba.alphabet.add('a')
-    aba.alphabet.add('b')
-    aba.alphabet.add('c')
+    aba.alphabet.add('L')
+    aba.alphabet.add('R')
     aba.expansion()  # автомат в auto.txt (переменная filepath в L_block)
 
-    aba_star = kleene_star(aba)
-    print(aba_star)
-    print(aba)
-    print(conc(aba, aba_star))

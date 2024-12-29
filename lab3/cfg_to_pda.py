@@ -19,5 +19,7 @@ if __name__ == "__main__":
         if vis.strip() == 'y' or vis.strip() == 'д':
             pda.visualize_pda()
 
+        print(f"Детерминированный PDA?: {pda.deterministic}")
+
         pda.export_to_file()
 
