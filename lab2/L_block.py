@@ -88,9 +88,9 @@ class L:
                 indexes.append(i)
                 full = 0
 
-        for i in indexes:
-            self.s_exp.pop(i)
-            self.table_exp.pop(i)
+        for j, i in enumerate(indexes):
+            self.s_exp.pop(i - j)
+            self.table_exp.pop(i - j)
 
         if full:
             equal = eq(self)
